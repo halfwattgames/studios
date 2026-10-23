@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Instant Quote Calculator Demo | Halfwatt Studios</title>
+<meta name="description" content="Try a working instant-quote calculator for a service business website.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%2317211e'/%3E%3Cpath d='M16 2a14 14 0 0 0 0 28z' fill='%23f6c945'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+  /* Layout: a single working tool, front and center, with a short "how it works on your site" strip beneath. */
+  :root {
+    --bg: #eef3f1;
+    --surface: #ffffff;
+    --ink: #17211e;
+    --muted: #55645f;
+    --line: #d6e0dc;
+    --brand: #0f6b5c;
+    --brand-ink: #ffffff;
+    --brand-soft: #e3f0ec;
+    --highlight: #f6c945;
+    --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --font-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1614; --surface: #17211e; --ink: #e6eeeb; --muted: #9fb1ab; --line: #2a3733;
+      --brand: #3fae98; --brand-ink: #0b1210; --brand-soft: #1c2c28; --highlight: #f6c945;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1614; --surface: #17211e; --ink: #e6eeeb; --muted: #9fb1ab; --line: #2a3733;
+    --brand: #3fae98; --brand-ink: #0b1210; --brand-soft: #1c2c28; --highlight: #f6c945;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 17px/1.5 var(--font-body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 32px 48px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; display: grid; gap: 28px; }
+  .wrap > *, .services, .svc, .fields > label { min-width: 0; }
+
+  header { display: grid; gap: 8px; }
+  .eyebrow { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  h1 { font-family: var(--font-display); font-size: clamp(30px, 5vw, 42px); line-height: 1.08; margin: 0; letter-spacing: -.02em; text-wrap: balance; }
+  .lede { margin: 0; color: var(--muted); max-width: 60ch; }
+  .demo-tag { display: inline-block; background: var(--highlight); color: #17211e; font-weight: 600; font-size: 13px; padding: 2px 10px; border-radius: 999px; }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+  .card-head { padding: 22px 24px 6px; display: grid; gap: 4px; }
+  .card-head h2 { font-family: var(--font-display); font-size: 24px; margin: 0; }
+  .card-head p { margin: 0; color: var(--muted); }
+
+  .services { padding: 12px 24px 20px; display: grid; gap: 12px; }
+  .svc { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; transition: border-color .15s, background .15s; }
+  .svc.on { border-color: var(--brand); background: var(--brand-soft); }
+  .svc label.top { display: flex; align-items: center; gap: 10px; font-weight: 600; cursor: pointer; }
+  .svc input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--brand); }
+  .svc .hint { color: var(--muted); font-size: 15px; margin-left: 30px; }
+  .fields { display: none; margin: 12px 0 0 30px; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+  .svc.on .fields { display: grid; }
+  .fields label { font-size: 14px; color: var(--muted); display: grid; gap: 4px; }
+  .fields input, .fields select, .book input {
+    font: inherit; color: var(--ink); background: var(--surface);
+    padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; width: 100%; min-width: 0;
+  }
+  input:focus-visible, select:focus-visible, button:focus-visible { outline: 3px solid color-mix(in srgb, var(--brand) 45%, transparent); outline-offset: 1px; }
+
+  .lines { padding: 0 24px; }
+  .lines table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .lines td { padding: 7px 0; border-bottom: 1px dashed var(--line); }
+  .lines td:last-child { text-align: right; }
+  .lines .disc td { color: var(--brand); font-weight: 600; }
+
+  .total { margin-top: 8px; padding: 18px 24px; background: var(--brand); color: var(--brand-ink);
+           display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 8px 16px; }
+  .total .sub { font-size: 14px; opacity: .85; }
+  .total .amt { font-family: var(--font-display); font-size: 40px; line-height: 1; font-variant-numeric: tabular-nums; }
+
+  .book { padding: 20px 24px 24px; display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
+  .book .full { grid-column: 1 / -1; }
+  .btn { font: inherit; font-weight: 600; border: 0; border-radius: 10px; padding: 12px 18px; cursor: pointer;
+         background: var(--brand); color: var(--brand-ink); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .note { color: var(--muted); font-size: 14px; text-align: center; padding: 0 24px 20px; margin: 0; }
+
+  .sent { margin: 0 24px 24px; border: 1px solid var(--brand); background: var(--brand-soft); border-radius: 12px; padding: 16px; display: grid; gap: 8px; }
+  .sent strong { font-family: var(--font-display); font-size: 18px; }
+  .sent pre { margin: 0; white-space: pre-wrap; font: 14px/1.5 ui-monospace, Consolas, monospace; color: var(--ink); overflow-x: auto; }
+
+  .how { display: grid; gap: 14px; }
+  .how h2 { font-family: var(--font-display); font-size: 22px; margin: 0; }
+  .how ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; max-width: 62ch; }
+  .how li::marker { color: var(--brand); }
+  .cta { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; border-top: 1px solid var(--line); padding-top: 16px; }
+  .cta a { color: var(--brand); font-weight: 600; }
+  .cta span { color: var(--muted); }
+
+  @media (max-width: 520px) {
+    .book { grid-template-columns: 1fr; }
+    .fields { margin-left: 0; }
+    .total .amt { font-size: 34px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .svc { transition: none; } }
+  body { margin: 0; }
+  .back { font-weight: 600; color: var(--brand); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <a class="back" href="./">← Halfwatt Studios</a>
+    <h1>Let customers price the job themselves</h1>
+    <p class="lede">This is a working instant-quote calculator, set up for an example exterior cleaning company. Tick services, change the sizes, and watch the price update. <span class="demo-tag">Demo prices</span></p>
+  </header>
+
+  <section class="card" aria-label="Quote calculator">
+    <div class="card-head">
+      <h2>Get your instant quote</h2>
+      <p>Pick your services and see a price in seconds. No phone call needed.</p>
+    </div>
+    <div class="services" id="qc-services"></div>
+    <div class="lines"><table id="qc-lines"></table></div>
+    <div class="total">
+      <div><div class="sub">Estimated price</div><div class="amt" id="qc-total">$0</div></div>
+      <div class="sub" id="qc-range"></div>
+    </div>
+    <form class="book" id="qc-form">
+      <input class="full" id="f-name" name="name" placeholder="Your name" autocomplete="off" required>
+      <input id="f-phone" name="phone" placeholder="Phone" autocomplete="off" required>
+      <input id="f-email" name="email" type="email" placeholder="Email (optional)" autocomplete="off">
+      <input class="full" id="f-address" name="address" placeholder="Service address" autocomplete="off">
+      <button class="btn full" type="submit" id="qc-submit">Request this quote</button>
+    </form>
+    <div class="sent" id="qc-sent" hidden>
+      <strong>Here's what the business would receive</strong>
+      <span>On a real site this lands in the owner's inbox. Nothing was sent from this demo.</span>
+      <pre id="qc-preview"></pre>
+    </div>
+    <p class="note">Final price is confirmed after a quick look at the property.</p>
+  </section>
+
+  <section class="how">
+    <h2>On your website</h2>
+    <ul>
+      <li>Built around your services and how you actually price them: per square foot, per room, per hour, flat rates, add-ons, minimum charge.</li>
+      <li>Matches your colors and works on phones.</li>
+      <li>Pastes into WordPress, Wix, Squarespace, Shopify, Webflow or any builder with an HTML block.</li>
+      <li>One-time purchase. No monthly fees or plugins, and you own the code.</li>
+    </ul>
+    <div class="cta">
+      <a href="https://www.fiverr.com/halfwattstudios" target="_blank" rel="noopener">Get one built on Fiverr</a>
+      <span>Delivered in about 3 days.</span>
+    </div>
+  </section>
+</div>
+
+<script>
+const CONFIG = {
+  currency: "USD",
+  minimumCharge: 149,
+  rangeSpread: 0.10,
+  bundleDiscount: { services: 2, percent: 10 },
+  services: [
+    { id: "house", name: "House soft wash", hint: "Siding, trim and eaves", on: true,
+      fields: [
+        { id: "sqft", label: "Home size (sq ft)", type: "number", value: 2000 },
+        { id: "stories", label: "Stories", type: "select", options: [["1", 1], ["2", 1.2], ["3", 1.45]] }
+      ],
+      price: v => v.sqft * 0.15 * v.stories },
+    { id: "drive", name: "Driveway & concrete", hint: "Surface-cleaned, edges included", on: true,
+      fields: [{ id: "sqft", label: "Concrete area (sq ft)", type: "number", value: 600 }],
+      price: v => v.sqft * 0.18 },
+    { id: "roof", name: "Roof soft wash", hint: "Removes black streaks and moss",
+      fields: [
+        { id: "sqft", label: "Roof area (sq ft)", type: "number", value: 2200 },
+        { id: "pitch", label: "Roof pitch", type: "select", options: [["Walkable", 1], ["Steep", 1.35]] }
+      ],
+      price: v => v.sqft * 0.22 * v.pitch },
+    { id: "gutter", name: "Gutter cleaning", hint: "Clear and flush downspouts",
+      fields: [{ id: "ft", label: "Gutter length (ft)", type: "number", value: 150 }],
+      price: v => v.ft * 1.1 },
+    { id: "deck", name: "Deck or fence", hint: "Wood or composite",
+      fields: [{ id: "sqft", label: "Area (sq ft)", type: "number", value: 300 }],
+      price: v => v.sqft * 0.35 }
+  ]
+};
+
+const $ = id => document.getElementById(id);
+const money = n => n.toLocaleString("en-US", { style: "currency", currency: CONFIG.currency, maximumFractionDigits: 0 });
+const state = {};
+
+for (const s of CONFIG.services) {
+  state[s.id] = { on: !!s.on, values: {} };
+  const box = document.createElement("div");
+  box.className = "svc" + (s.on ? " on" : "");
+  box.innerHTML = `<label class="top"><input type="checkbox" id="svc-${s.id}"${s.on ? " checked" : ""}> ${s.name}</label>
+    <div class="hint">${s.hint}</div><div class="fields"></div>`;
+  const fields = box.querySelector(".fields");
+  for (const f of s.fields) {
+    const wrap = document.createElement("label");
+    wrap.textContent = f.label;
+    let input;
+    if (f.type === "select") {
+      input = document.createElement("select");
+      f.options.forEach(([text, val]) => input.add(new Option(text, val)));
+    } else {
+      input = document.createElement("input");
+      input.type = "number"; input.min = 0; input.value = f.value; input.inputMode = "numeric";
+    }
+    input.id = `f-${s.id}-${f.id}`;
+    input.addEventListener("input", () => { state[s.id].values[f.id] = +input.value || 0; render(); });
+    state[s.id].values[f.id] = +input.value || 0;
+    wrap.appendChild(input);
+    fields.appendChild(wrap);
+  }
+  box.querySelector("input[type=checkbox]").addEventListener("change", e => {
+    state[s.id].on = e.target.checked; box.classList.toggle("on", e.target.checked); render();
+  });
+  $("qc-services").appendChild(box);
+}
+
+function quote() {
+  const lines = CONFIG.services.filter(s => state[s.id].on)
+    .map(s => ({ name: s.name, amount: Math.round(s.price(state[s.id].values)) }));
+  const subtotal = lines.reduce((a, l) => a + l.amount, 0);
+  const discount = lines.length >= CONFIG.bundleDiscount.services ? Math.round(subtotal * CONFIG.bundleDiscount.percent / 100) : 0;
+  let total = subtotal - discount;
+  const minApplied = lines.length > 0 && total < CONFIG.minimumCharge;
+  if (minApplied) total = CONFIG.minimumCharge;
+  return { lines, discount, total, minApplied };
+}
+
+function render() {
+  const q = quote();
+  const rows = q.lines.map(l => `<tr><td>${l.name}</td><td>${money(l.amount)}</td></tr>`);
+  if (q.discount) rows.push(`<tr class="disc"><td>Bundle discount (${CONFIG.bundleDiscount.percent}%)</td><td>−${money(q.discount)}</td></tr>`);
+  if (q.minApplied) rows.push(`<tr><td>Minimum job charge applies</td><td>${money(CONFIG.minimumCharge)}</td></tr>`);
+  $("qc-lines").innerHTML = rows.join("");
+  $("qc-total").textContent = money(q.total);
+  $("qc-range").textContent = q.total
+    ? `Typical range ${money(q.total * (1 - CONFIG.rangeSpread))} – ${money(q.total * (1 + CONFIG.rangeSpread))}`
+    : "Select a service to start";
+  $("qc-submit").disabled = !q.total;
+}
+
+$("qc-form").addEventListener("submit", e => {
+  e.preventDefault();
+  const q = quote(), d = new FormData(e.target);
+  $("qc-preview").textContent = [
+    `New quote request: ${money(q.total)}`, "",
+    `Name: ${d.get("name")}`, `Phone: ${d.get("phone")}`,
+    d.get("email") ? `Email: ${d.get("email")}` : null,
+    d.get("address") ? `Address: ${d.get("address")}` : null, "",
+    ...q.lines.map(l => `${l.name}: ${money(l.amount)}`),
+    q.discount ? `Bundle discount: −${money(q.discount)}` : null,
+    `Estimated total: ${money(q.total)}`
+  ].filter(x => x !== null).join("\n");
+  $("qc-sent").hidden = false;
+  $("qc-sent").scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+});
+
+render();
+</script>
+</body>
+</html>
